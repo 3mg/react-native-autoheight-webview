@@ -36,7 +36,10 @@ export default class AutoHeightWebView extends PureComponent {
         type: PropTypes.string,
         rel: PropTypes.string
       })
-    )
+    ),
+    webViewKey: PropTypes.string,
+    onMessage: PropTypes.func,
+    webViewRef: PropTypes.func,
   };
 
   static defaultProps = {
@@ -67,15 +70,15 @@ export default class AutoHeightWebView extends PureComponent {
       this.setState({ height }, () => {
         enableAnimation
           ? Animated.timing(this.opacityAnimatedValue, {
-              toValue: 1,
-              duration: animationDuration
-            }).start(() => onHeightUpdated(height, this.props))
+            toValue: 1,
+            duration: animationDuration
+          }).start(() => onHeightUpdated(height, this.props))
           : onHeightUpdated(height, this.props);
       });
     }
   };
 
-  getWebView = webView => (this.webView = webView);
+  getWebView = webView => {this.webView = webView; if(typeof this.props.webViewRef === 'function') { this.props.webViewRef(webView); }};
 
   stopLoading() {
     this.webView.stopLoading();
@@ -94,36 +97,40 @@ export default class AutoHeightWebView extends PureComponent {
       source,
       heightOffset,
       customScript,
-      style
+      style,
+      webViewKey,
+      onMessage,
     } = this.props;
     const webViewSource = Object.assign({}, source, { baseUrl: 'web/' });
     return (
       <Animated.View
-        style={[
-          styles.container,
-          {
-            opacity: enableAnimation ? this.opacityAnimatedValue : 1,
-            height: height + heightOffset
-          },
-          style
-        ]}
-      >
-        <WebView
-          ref={this.getWebView}
-          onError={onError}
-          onLoad={onLoad}
-          onLoadStart={onLoadStart}
-          onLoadEnd={onLoadEnd}
-          onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
-          style={styles.webView}
-          injectedJavaScript={script + customScript}
-          scrollEnabled={false}
-          scalesPageToFit={scalesPageToFit}
-          source={webViewSource}
-          onNavigationStateChange={this.handleNavigationStateChange}
-        />
-      </Animated.View>
-    );
+    style={[
+        styles.container,
+    {
+      opacity: enableAnimation ? this.opacityAnimatedValue : 1,
+        height: height + heightOffset
+    },
+    style
+  ]}
+  >
+  <WebView
+    ref={this.getWebView}
+    onError={onError}
+    onLoad={onLoad}
+    onLoadStart={onLoadStart}
+    onLoadEnd={onLoadEnd}
+    onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+    style={styles.webView}
+    injectedJavaScript={script + customScript}
+    scrollEnabled={false}
+    scalesPageToFit={scalesPageToFit}
+    source={webViewSource}
+    onNavigationStateChange={this.handleNavigationStateChange}
+    onMessage={onMessage}
+    key={webViewKey}
+    />
+    </Animated.View>
+  );
   }
 }
 
